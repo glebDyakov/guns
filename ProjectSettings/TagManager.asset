@@ -12,6 +12,7 @@ TagManager:
   - AllOfEnemyTeam
   - ControlPoint
   - ControlPointEnemy
+  - GameSettings
   layers:
   - Default
   - TransparentFX

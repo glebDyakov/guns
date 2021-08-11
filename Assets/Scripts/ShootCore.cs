@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ShootCore : MonoBehaviour {
 
+	public float shootTimeStamp = 0f;
 	public GameObject bulletOrigin;
 	public List<AudioClip> clips;
 
@@ -17,6 +18,10 @@ public class ShootCore : MonoBehaviour {
 	public GameObject pointOfCore;
 	public GameObject coreInst;
 	KeyCode keyboardShoot;
+
+	public string command;
+
+	PhotonView photonView;
 
 	//public float isLeftTeam = 20f;
 
@@ -33,12 +38,18 @@ public class ShootCore : MonoBehaviour {
 	*/
 	void OnTriggerStay2D(Collider2D other){
 		if (other.gameObject.tag == "Player" || other.gameObject.tag == "PlayerEnemy") {
-			if (other.gameObject.GetComponent<MoveHero> ().ShootFromGun ()) {
+			if (other.gameObject.GetComponent<MoveHero> ().ShootFromGun () && shootTimeStamp + 5 < Time.timeSinceLevelLoad) {
+				
+				shootTimeStamp = Time.timeSinceLevelLoad;
+
 				// здесь раньше была логика которая проверяла на клавишу стрельбы
 				// эту логику перенём в функцию которую вызываю выше
 
 
-				coreInst = Instantiate (core, bulletOrigin.transform.position, Quaternion.identity);
+				// coreInst = Instantiate (core, bulletOrigin.transform.position, Quaternion.identity);
+				coreInst = PhotonNetwork.Instantiate (core.gameObject.name, bulletOrigin.transform.position, Quaternion.identity, 0);
+				
+
 				coreInst.GetComponent<CoreAttack> ().insideGun = true;
 				coreInst.GetComponent<CoreAttack> ().gun = gameObject;
 				//coreInst.name = "Core";
@@ -112,7 +123,29 @@ public class ShootCore : MonoBehaviour {
 			}
 		}
 	}
-	void AddCore(){
+
+	public void OnEvent(byte eventCode, object content, int senderId){
+		if (eventCode == 33) {
+			try {
+				object[] data = (object[])content;
+				string coreName = (string)data[0];
+				// GameObject core = (GameObject)data[0];
+				GameObject core = GameObject.Find(coreName);
+				float posX = (float)data[1];
+				core.GetComponent<CoreAttack> ().gameSettings = GameObject.FindWithTag("GameSettings").GetComponent<SetBackground>();
+				core.transform.position = new Vector2(posX, pointOfCore.transform.position.y);
+				core.GetComponent<CoreAttack> ().insideGun = false;	
+			} catch (System.InvalidCastException e) {
+				Debug.Log("InvalidCastException поймал 2");
+			}
+		}
+	}
+
+	public void AddCore(){
+		float randomPositionX = Random.Range(-24, 24f);
+		GameObject coreNew = PhotonNetwork.Instantiate (core.gameObject.name, new Vector2(randomPositionX, pointOfCore.transform.position.y), Quaternion.identity, 0);
+		// PhotonNetwork.RaiseEvent(33, new object[] { coreNew, randomPositionX }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+		PhotonNetwork.RaiseEvent(33, new object[] { coreNew.name, randomPositionX }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
 		
 		/*
 		закомментировал потому что нельзя называться coreInst то что не для стрельбы а только для подбора
@@ -120,14 +153,21 @@ public class ShootCore : MonoBehaviour {
 		coreInst.transform.localPosition = new Vector2(0f, 0f);
 		*/
 
-		GameObject coreNew = Instantiate (core.gameObject, new Vector2(pointOfCore.transform.position.x, pointOfCore.transform.position.y), Quaternion.identity, gameObject.transform);
-		coreNew.transform.position = pointOfCore.transform.position;
-		coreNew.GetComponent<CoreAttack> ().insideGun = false;
-		//coreNew.GetComponent<CoreAttack> ().gun = gameObject;
+		/*
+		float randomPositionX = Random.Range(-24, 24f);
+		GameObject coreNew = PhotonNetwork.Instantiate (core.gameObject.name, new Vector2(randomPositionX, pointOfCore.transform.position.y), Quaternion.identity, 0);
 
+		coreNew.GetComponent<CoreAttack> ().gameSettings = GameObject.FindWithTag("GameSettings").GetComponent<SetBackground>();
+		coreNew.transform.position = new Vector2(randomPositionX, pointOfCore.transform.position.y);
+		coreNew.GetComponent<CoreAttack> ().insideGun = false;
+		*/
 	}
 
 	void Start () {
+		
+		PhotonNetwork.OnEventCall += OnEvent;
+		photonView = PhotonView.Get(this);
+		
 		//isLeftTeam = gameObject.GetComponent<SpriteRenderer> ().flipX ? -20f : 20f;
 		coreInst = core;
 		//rb2D = core.GetComponent<Rigidbody2D>();
@@ -144,4 +184,5 @@ public class ShootCore : MonoBehaviour {
 		}
 		
 	}
+
 }

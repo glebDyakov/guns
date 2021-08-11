@@ -183,6 +183,9 @@
      <Compile Include="Assets\PhotonChatApi\IChatClientListener.cs" />
      <Compile Include="Assets\Scripts\CoreAttack.cs" />
      <Compile Include="Assets\Scripts\MoveHero.cs" />
+     <Compile Include="Assets\Scripts\PhotonScripts\GunNetwork.cs" />
+     <Compile Include="Assets\Scripts\PhotonScripts\Launcher.cs" />
+     <Compile Include="Assets\Scripts\PhotonScripts\RoomLogic.cs" />
      <Compile Include="Assets\Scripts\RockAttack.cs" />
      <Compile Include="Assets\Scripts\SandDown.cs" />
      <Compile Include="Assets\Scripts\ScriptableObjects\CustomData.cs" />
@@ -372,14 +375,14 @@
     <Reference Include="UnityEditor">
         <HintPath>C:/Program Files/Unity/Hub/Editor/2019.4.16f1/Editor/Data/Managed/UnityEditor.dll</HintPath>
     </Reference>
-    <Reference Include="nunit.framework">
-        <HintPath>C:/unityProjects/Guns/Library/PackageCache/com.unity.ext.nunit@1.0.5/net35/unity-custom/nunit.framework.dll</HintPath>
-    </Reference>
     <Reference Include="Photon3Unity3D">
         <HintPath>C:/unityProjects/Guns/Assets/Plugins/Photon3Unity3D.dll</HintPath>
     </Reference>
     <Reference Include="websocket-sharp">
         <HintPath>C:/unityProjects/Guns/Assets/Plugins/WebSocket/websocket-sharp.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework">
+        <HintPath>C:/unityProjects/Guns/Library/PackageCache/com.unity.ext.nunit@1.0.5/net35/unity-custom/nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
         <HintPath>C:/Program Files/Unity/Hub/Editor/2019.4.16f1/Editor/Data/NetStandard/ref/2.0.0/netstandard.dll</HintPath>

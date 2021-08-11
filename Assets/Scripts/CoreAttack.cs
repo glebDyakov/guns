@@ -14,8 +14,37 @@ public class CoreAttack : MonoBehaviour {
 	public GameObject allOfHeroTeam;
 	public GameObject allOfEnemyTeam;
 	public GameObject explosion;
+	public string currentCommand;
+	public List<Sprite> coresSprites;
+	public List<string> commands = new List<string>(){
+		"pirates",
+		"clowns",
+		"knights",
+		"rods"
+	};
+
+	public SetBackground gameSettings;
+
+	public PhotonView photonView;
+		
+
+	public void OnEvent(byte eventCode, object content, int senderId) {
+		if (eventCode == 33) {
+			try {
+				object[] data = (object[])content;
+				
+				int commandIndex = (int)data[0];
+				currentCommand = gameSettings.shuffledCommands[commandIndex];
+			} catch (System.InvalidCastException e) {
+				Debug.Log("InvalidCastException поймал 3");
+			}
+		}
+	}
 
 	void Start(){
+		PhotonNetwork.OnEventCall += OnEvent;
+	 	photonView = PhotonView.Get(this);
+
 		if(gameObject.name.Contains("Enemy")){
 			playerNumberOne = GameObject.FindGameObjectsWithTag("PlayerEnemy")[0];
 			playerNumberTwo = GameObject.FindGameObjectsWithTag("PlayerEnemy")[1];
@@ -30,6 +59,23 @@ public class CoreAttack : MonoBehaviour {
 		allOfHeroTeam = GameObject.FindWithTag("AllOfHeroTeam");
 		allOfEnemyTeam = GameObject.FindWithTag("AllOfEnemyTeam");
 
+		// currentCommand = commands[Random.Range(0, commands.Count)];
+		// currentCommand = gameSettings.shuffledCommands[Random.Range(0, gameSettings.shuffledCommands.Count)];
+		// currentCommand = SetBackground.shuffledCommands[Random.Range(0, 2)];
+		if(PhotonNetwork.isMasterClient){
+			int randomCommand = Random.Range(0, 2);
+			PhotonNetwork.RaiseEvent(33, new object[] { randomCommand }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+		}
+
+		if(currentCommand.Contains("pirates")){
+			GetComponent<SpriteRenderer>().sprite = coresSprites[0];
+		} else if(currentCommand.Contains("clowns")){
+			GetComponent<SpriteRenderer>().sprite = coresSprites[1];
+		} else if(currentCommand.Contains("knights")){
+			GetComponent<SpriteRenderer>().sprite = coresSprites[2];
+		} else if(currentCommand.Contains("rods")){
+			GetComponent<SpriteRenderer>().sprite = coresSprites[3];
+		}
 	}
 
 	void OnCollisionEnter2D (Collision2D other) {
@@ -113,13 +159,20 @@ public class CoreAttack : MonoBehaviour {
 					*/
 				}
 			}
-		} else if (isGun && !insideGun) {
+		} else if (isGun && !insideGun && currentCommand.Contains(other.gameObject.GetComponent<ShootCore>().command)) {
 			if(!other.gameObject.name.Contains("Rod")){
 				other.gameObject.GetComponent<ShootCore> ().bullets.Add ("newbullet");
-				Destroy (gameObject, 0.5f);
+
+				Debug.Log("Удаляем ядро по всей сети");
+				// Destroy (gameObject, 0.5f);
+				PhotonNetwork.Destroy(gameObject);
+			
 			} else if(other.gameObject.name.Contains("Rod") && other.gameObject.GetComponent<ShootCore> ().bullets.Count <= 0){
 				other.gameObject.GetComponent<ShootCore> ().bullets.Add ("newbullet");
-				Destroy (gameObject, 0.5f);
+				
+				// Destroy (gameObject, 0.5f);
+				PhotonNetwork.Destroy(gameObject);
+			
 			}
 		} else if ((other.gameObject.tag.Contains ("Platform") || other.gameObject.name.Contains ("Bounds")) && insideGun) {
 			if (!other.gameObject.name.Contains ("Rod")) {

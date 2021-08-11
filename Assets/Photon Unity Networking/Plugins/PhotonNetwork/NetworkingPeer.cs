@@ -4620,8 +4620,12 @@ internal class NetworkingPeer : LoadBalancingPeer, IPhotonPeerListener
             }
             else if (one is float)
             {
-                float a = (float)one;
-                float b = (float)two;
+                // float a = (float)one;
+                // float b = (float)two;
+                
+                float a = Convert.ToSingle(one);
+                float b = Convert.ToSingle(two);
+
                 if (a.AlmostEquals(b, PhotonNetwork.precisionForFloatSynchronization))
                 {
                     return true;
