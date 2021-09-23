@@ -134,7 +134,7 @@ MonoBehaviour:
   allOfHeroTeam: {fileID: 0}
   allOfEnemyTeam: {fileID: 0}
   explosion: {fileID: 0}
-  currentCommand: 
+  currentCommand: knights
   coresSprites:
   - {fileID: 21300000, guid: 9e46f3ae1932ade4793bc1ddb6dab03b, type: 3}
   - {fileID: 21300000, guid: b9d2795ff2e379e4886f18627871c0ef, type: 3}
@@ -146,6 +146,7 @@ MonoBehaviour:
   - knights
   - rods
   gameSettings: {fileID: 0}
+  photonView: {fileID: 0}
 --- !u!60 &60768219520258864
 PolygonCollider2D:
   m_ObjectHideFlags: 0

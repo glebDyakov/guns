@@ -21,6 +21,7 @@ public class GunNetwork : PunBehaviour {
     public GameObject emptyPrefab;
     public Coroutine checkLobby;
     TypedLobby typedLobby;
+    public int countPlayers = 0;
     // public string ROOM_CODE = "C0";
 
     void Awake() {
@@ -104,7 +105,11 @@ public class GunNetwork : PunBehaviour {
                 PhotonNetwork.player.NickName = playerName;
                 Debug.Log("PhotonNetwork.IsConnected! | Trying to Create/Join Room " + roomNameField.text);
                 RoomOptions roomOptions = new RoomOptions();
-                roomOptions.maxPlayers = 2;
+                
+                // roomOptions.maxPlayers = 2;
+                roomOptions.maxPlayers = 1;
+                countPlayers = roomOptions.maxPlayers;
+                
                 // roomOptions.CustomRoomProperties = new ExitGames.Client.Photon.Hashtable { { ROOM_CODE, "strRoomCode" } };
                 // roomOptions.CustomRoomPropertiesForLobby = new string[]{ ROOM_CODE };
                 TypedLobby typedLobby = new TypedLobby(roomName, LobbyType.Default);
@@ -118,7 +123,7 @@ public class GunNetwork : PunBehaviour {
     }
 
     public void LoadArena() {
-        if (PhotonNetwork.room.playerCount >= 2) {
+        if (PhotonNetwork.room.playerCount >= countPlayers) {
             PhotonNetwork.LoadLevel("main");
         } else {
             playerStatus.text = "Minimum 4 Players required to Load Arena!";
@@ -129,8 +134,10 @@ public class GunNetwork : PunBehaviour {
     public override void OnPhotonPlayerConnected(PhotonPlayer newPlayer) {
         playerRoom.SetActive(true);
         playersCount.text = PhotonNetwork.room.playerCount.ToString() + "/4";
-        if(PhotonNetwork.room.playerCount >= 2){
-            buttonJoinedArena.interactable = true;
+        if(PhotonNetwork.room.playerCount >= countPlayers){
+            if(PhotonNetwork.isMasterClient){
+                buttonJoinedArena.interactable = true;
+            }
         }
         for(int playerIndex = 0; playerIndex < players.transform.childCount; playerIndex++){
             Destroy(players.transform.GetChild(playerIndex).gameObject);
@@ -145,7 +152,7 @@ public class GunNetwork : PunBehaviour {
     }
 
     public override void OnPhotonPlayerDisconnected (PhotonPlayer otherPlayer){
-        if(PhotonNetwork.room.playerCount >= 2){
+        if(PhotonNetwork.room.playerCount >= countPlayers){
             playersCount.GetComponent<UnityEngine.UI.Text>().text = PhotonNetwork.room.playerCount.ToString() + "/4";
         } else if(PhotonNetwork.room.playerCount <= 1){
             playersCount.GetComponent<UnityEngine.UI.Text>().text = "1/4";
@@ -162,8 +169,10 @@ public class GunNetwork : PunBehaviour {
         Debug.Log("Вы присоединились к комнате и неважно создатель комнаты вы или нет");
         playerRoom.SetActive(true);
         playersCount.text = PhotonNetwork.room.playerCount.ToString() + "/4";
-        if(PhotonNetwork.room.playerCount >= 2){
-            buttonJoinedArena.interactable = true;
+        if(PhotonNetwork.room.playerCount >= countPlayers){
+            if(PhotonNetwork.isMasterClient){
+                buttonJoinedArena.interactable = true;
+            }
         }
         
         for(int playerIndex = 0; playerIndex < PhotonNetwork.room.playerCount; playerIndex++){
@@ -201,7 +210,9 @@ public class GunNetwork : PunBehaviour {
             Destroy(players.transform.GetChild(playerIndex).gameObject);
         }
         playersCount.GetComponent<UnityEngine.UI.Text>().text = "1/4";
-        PhotonNetwork.JoinLobby	();
+        
+        //PhotonNetwork.JoinLobby	();
+        
         checkLobby = StartCoroutine(CheckLobby());
     }
 
@@ -216,6 +227,7 @@ public class GunNetwork : PunBehaviour {
     public void ExitFromRoom(){
         PhotonNetwork.LeaveRoom();
         playerRoom.SetActive(false);
+        checkLobby = StartCoroutine(CheckLobby());
     }
 
     public override void OnReceivedRoomListUpdate() {
@@ -231,11 +243,15 @@ public class GunNetwork : PunBehaviour {
                 // roomInst.GetComponent<RectTransform>().anchorMax = new Vector2(0, 1);
                 // roomInst.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
                 
-                roomInst.GetComponent<UnityEngine.UI.Button>().enabled = true;
-                roomInst.GetComponent<UnityEngine.UI.Text>().text = PhotonNetwork.GetRoomList()[roomIndex].Name + ": " + PhotonNetwork.GetRoomList()[roomIndex].PlayerCount.ToString() + "/4";
-                roomInst.transform.parent = rooms.transform;
-                roomInst.transform.localScale = new Vector2(1f, 1f);
-                
+                try {
+                    roomInst.GetComponent<UnityEngine.UI.Button>().enabled = true;
+                    roomInst.GetComponent<UnityEngine.UI.Text>().text = PhotonNetwork.GetRoomList()[roomIndex].Name + ": " + PhotonNetwork.GetRoomList()[roomIndex].PlayerCount.ToString() + "/4";
+                    roomInst.transform.parent = rooms.transform;
+                    roomInst.transform.localScale = new Vector2(1f, 1f);
+                } catch(System.Exception e){
+                    Debug.Log("ошибка при обновлении комнат");
+                }
+
                 // roomInst.GetComponent<RectTransform>().sizeDelta = new Vector2(487f, roomInst.GetComponent<RectTransform>().sizeDelta.y);
                 roomInst.GetComponent<RectTransform>().sizeDelta = new Vector2(rooms.GetComponent<RectTransform>().sizeDelta.x / 2, roomInst.GetComponent<RectTransform>().sizeDelta.y);
                 

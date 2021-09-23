@@ -154,6 +154,8 @@ public class SetBackground : MonoBehaviour {
 
 	void Start() {
 		
+		Debug.Log("PlayerPrefs.GetInt(PlayerIndex): " + PlayerPrefs.GetInt("PlayerIndex"));
+
 		PhotonNetwork.OnEventCall += OnEvent;
 		
 		photonView = PhotonView.Get(this);
@@ -370,6 +372,9 @@ public class SetBackground : MonoBehaviour {
 				
 				int commandIndex = 0;
 				shuffledCommands = receivedShuffledCommands;
+				
+				PhotonNetwork.RaiseEvent(34, new object[] {  }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+
 				foreach(var command in receivedShuffledCommands){
 					commandIndex++;
 					if (commandIndex == 1) {
@@ -551,12 +556,19 @@ public class SetBackground : MonoBehaviour {
 					}
 				}
 				if(PhotonNetwork.isMasterClient){
-					players [0].GetComponent<MoveHero> ().gun.GetComponent<ShootCore>().AddCore();
-					players [2].GetComponent<MoveHero> ().gun.GetComponent<ShootCore>().AddCore();
+				
+					// players [0].GetComponent<MoveHero> ().gun.GetComponent<ShootCore>().AddCore();
+					// players [2].GetComponent<MoveHero> ().gun.GetComponent<ShootCore>().AddCore();
+				
+					players [0].GetComponent<MoveHero> ().gun.GetComponent<ShootCore>().Invoke("AddCore", 2f);
+					players [2].GetComponent<MoveHero> ().gun.GetComponent<ShootCore>().Invoke("AddCore", 2f);
+
 				}
 			} catch (System.InvalidCastException e) {
 				Debug.Log("InvalidCastException поймал 1");
 			}
+		} else if(eventCode == 34){
+			Debug.Log("SetBackground 34: " + System.String.Join(" ", shuffledCommands) + " : " + PlayerPrefs.GetInt("PlayerIndex").ToString());
 		}
 	}
 

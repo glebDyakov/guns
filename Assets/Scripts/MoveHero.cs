@@ -344,7 +344,7 @@ public class MoveHero : MonoBehaviour {
 
 	public void OnEvent(byte eventCode, object content, int senderId) {
 		if(eventCode == 199){
-			// try {
+			try {
 				object[] data = (object[])content;
 					
 				float playerIndex = (float)data[0];
@@ -362,9 +362,11 @@ public class MoveHero : MonoBehaviour {
 				// gameSettings.players[playerIndex].GetComponent<SpriteRenderer>().flipX = flipSide == 0f ? true : false;
 				gameSettings.players[playerNum].GetComponent<SpriteRenderer>().flipX = flipSide == 0f ? false : true;
 			
-			// } catch (System.InvalidCastException e) {
-				// Debug.Log("InvalidCastException поймал 4");
-			// }
+			} catch (System.InvalidCastException e) {
+				Debug.Log("InvalidCastException поймал 4");
+			} catch (System.Exception e) {
+				Debug.Log("Exception поймал 4");
+			}
 		}
 	}
 }

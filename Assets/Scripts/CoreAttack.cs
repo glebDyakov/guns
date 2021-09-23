@@ -29,14 +29,37 @@ public class CoreAttack : MonoBehaviour {
 		
 
 	public void OnEvent(byte eventCode, object content, int senderId) {
-		if (eventCode == 33) {
+		if (eventCode == 36) {
 			try {
 				object[] data = (object[])content;
 				
 				int commandIndex = (int)data[0];
 				currentCommand = gameSettings.shuffledCommands[commandIndex];
+		
+				if(currentCommand.Contains("pirates")){
+					GetComponent<SpriteRenderer>().sprite = coresSprites[0];
+				} else if(currentCommand.Contains("clowns")){
+					GetComponent<SpriteRenderer>().sprite = coresSprites[1];
+				} else if(currentCommand.Contains("knights")){
+					GetComponent<SpriteRenderer>().sprite = coresSprites[2];
+				} else if(currentCommand.Contains("rods")){
+					GetComponent<SpriteRenderer>().sprite = coresSprites[3];
+				}
+
+				PhotonNetwork.RaiseEvent(37, new object[] { commandIndex }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+			
 			} catch (System.InvalidCastException e) {
 				Debug.Log("InvalidCastException поймал 3");
+			}
+		} else if (eventCode == 37) {
+			try {
+				object[] data = (object[])content;
+				
+				int commandIndex = (int)data[0];
+			
+				Debug.Log("CoreAttack37: " + commandIndex + " : " + PlayerPrefs.GetInt("PlayerIndex").ToString());
+			} catch (System.InvalidCastException e) {
+				Debug.Log("InvalidCastException поймал 3.2");
 			}
 		}
 	}
@@ -62,20 +85,26 @@ public class CoreAttack : MonoBehaviour {
 		// currentCommand = commands[Random.Range(0, commands.Count)];
 		// currentCommand = gameSettings.shuffledCommands[Random.Range(0, gameSettings.shuffledCommands.Count)];
 		// currentCommand = SetBackground.shuffledCommands[Random.Range(0, 2)];
-		if(PhotonNetwork.isMasterClient){
-			int randomCommand = Random.Range(0, 2);
-			PhotonNetwork.RaiseEvent(33, new object[] { randomCommand }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
-		}
+		
+		//if(PhotonNetwork.isMasterClient){
+			
+			// int randomCommand = Random.Range(0, 2);
+			// currentCommand = gameSettings.shuffledCommands[randomCommand];
+			// if(currentCommand.Contains("pirates")){
+			// 	GetComponent<SpriteRenderer>().sprite = coresSprites[0];
+			// } else if(currentCommand.Contains("clowns")){
+			// 	GetComponent<SpriteRenderer>().sprite = coresSprites[1];
+			// } else if(currentCommand.Contains("knights")){
+			// 	GetComponent<SpriteRenderer>().sprite = coresSprites[2];
+			// } else if(currentCommand.Contains("rods")){
+			// 	GetComponent<SpriteRenderer>().sprite = coresSprites[3];
+			// }
+			// PhotonNetwork.RaiseEvent(33, new object[] { randomCommand }, true, new RaiseEventOptions { Receivers = ReceiverGroup.Others });
+			
+			//PhotonNetwork.RaiseEvent(36, new object[] { Random.Range(0, 2) }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+		
+		//}
 
-		if(currentCommand.Contains("pirates")){
-			GetComponent<SpriteRenderer>().sprite = coresSprites[0];
-		} else if(currentCommand.Contains("clowns")){
-			GetComponent<SpriteRenderer>().sprite = coresSprites[1];
-		} else if(currentCommand.Contains("knights")){
-			GetComponent<SpriteRenderer>().sprite = coresSprites[2];
-		} else if(currentCommand.Contains("rods")){
-			GetComponent<SpriteRenderer>().sprite = coresSprites[3];
-		}
 	}
 
 	void OnCollisionEnter2D (Collision2D other) {
@@ -83,6 +112,11 @@ public class CoreAttack : MonoBehaviour {
 		bool isGun = other.gameObject.name.Contains ("Gun") || other.gameObject.name == "Firework" || other.gameObject.name.Contains ("Rod") || other.gameObject.name.Contains ("Spear");
 		
 		if (other.gameObject.tag.Contains ("Player")) {
+			try {
+				photonView.TransferOwnership(other.gameObject.GetComponent<PhotonView>().owner);
+			} catch(System.Exception e) {
+				Debug.Log("Ошибка передачи владельца ядра");
+			}
 			/*
 			взрыв от выстрела ядром
 			if(playerNumberOne == "Screamer" || playerNumberOne == "Character"){
@@ -165,20 +199,91 @@ public class CoreAttack : MonoBehaviour {
 
 				Debug.Log("Удаляем ядро по всей сети");
 				// Destroy (gameObject, 0.5f);
-				PhotonNetwork.Destroy(gameObject);
-			
+				
+				// if(PhotonNetwork.player.ID == photonView.owner.ID){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// }
+
+				// if(PlayerPrefs.GetInt("PlayerIndex") == 1){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// }
+
+				// if(PlayerPrefs.GetInt("PlayerIndex") == 1){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// } else if(PlayerPrefs.GetInt("PlayerIndex") != 1 && photonView.ownerId == PhotonNetwork.player.ID){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// }
+
+				try {
+					if(photonView.ownerId == PhotonNetwork.player.ID && gameObject != null){
+						PhotonNetwork.Destroy(gameObject);
+					}
+				} catch(System.Exception e) {
+					Debug.Log("ошибка удаления 1");
+				}
+
 			} else if(other.gameObject.name.Contains("Rod") && other.gameObject.GetComponent<ShootCore> ().bullets.Count <= 0){
+				photonView.TransferOwnership(other.gameObject.GetComponent<PhotonView>().owner);
+
 				other.gameObject.GetComponent<ShootCore> ().bullets.Add ("newbullet");
 				
 				// Destroy (gameObject, 0.5f);
-				PhotonNetwork.Destroy(gameObject);
-			
+				
+				// if(PhotonNetwork.player.ID == photonView.owner.ID){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// }
+
+				// if(PlayerPrefs.GetInt("PlayerIndex") == 1){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// }
+
+				// if(PlayerPrefs.GetInt("PlayerIndex") == 1){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// } else if(PlayerPrefs.GetInt("PlayerIndex") != 1 && photonView.ownerId == PhotonNetwork.player.ID){
+				// 	PhotonNetwork.Destroy(gameObject);
+				// }
+
+				try {
+					if(photonView.ownerId == PhotonNetwork.player.ID && gameObject != null){
+						PhotonNetwork.Destroy(gameObject);
+					}
+				} catch(System.Exception e) {
+					Debug.Log("ошибка удаления 2");
+				}
+
 			}
 		} else if ((other.gameObject.tag.Contains ("Platform") || other.gameObject.name.Contains ("Bounds")) && insideGun) {
 			if (!other.gameObject.name.Contains ("Rod")) {
 				gun.GetComponent<Rigidbody2D> ().constraints = RigidbodyConstraints2D.FreezeRotation;
 			}
-			Destroy (gameObject);
+			
+			// Destroy (gameObject);
+				
+			// if(PhotonNetwork.player.ID == photonView.owner.ID){
+			// 	PhotonNetwork.Destroy(gameObject);
+			// }
+
+			// if(PlayerPrefs.GetInt("PlayerIndex") == 1){
+			// 	PhotonNetwork.Destroy(gameObject);
+			// } else if(PlayerPrefs.GetInt("PlayerIndex") != 1){
+			// 	photonView.TransferOwnership(PhotonNetwork.player.ID);
+			// 	PhotonNetwork.Destroy(gameObject);
+			// }
+
+			// if(PlayerPrefs.GetInt("PlayerIndex") == 1){
+			// 	PhotonNetwork.Destroy(gameObject);
+			// } else if(PlayerPrefs.GetInt("PlayerIndex") != 1 && photonView.ownerId == PhotonNetwork.player.ID){
+			// 	PhotonNetwork.Destroy(gameObject);
+			// }
+
+			try {
+				if(photonView.ownerId == PhotonNetwork.player.ID && gameObject != null){
+					PhotonNetwork.Destroy(gameObject);
+				}
+			} catch (System.Exception e) {
+				Debug.Log("ошибка удаления 3");
+			}
+
 		}
 	}
 
@@ -194,7 +299,10 @@ public class CoreAttack : MonoBehaviour {
 	*/
 	public void GameOver(){
 		print ("GameOver");
-		Application.LoadLevel (Application.loadedLevel);
+		
+		// Application.LoadLevel (Application.loadedLevel);
+		PhotonNetwork.LoadLevel(Application.loadedLevel);
+
 	}
 
 	public void OnBecameInvisible(){

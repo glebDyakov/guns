@@ -23,6 +23,8 @@ public class ShootCore : MonoBehaviour {
 
 	PhotonView photonView;
 
+	public SetBackground gameSettings;
+
 	//public float isLeftTeam = 20f;
 
 	/*
@@ -36,8 +38,18 @@ public class ShootCore : MonoBehaviour {
 	/*
 		должно быть пересечение игрока с пушкой а не пушки с ядром
 	*/
+	
+	void OnTriggerEnter2D(Collider2D other) {
+		if(other.gameObject.tag.Contains("Player")){
+			if(PlayerPrefs.GetInt("PlayerIndex") == other.gameObject.GetComponent<MoveHero>().playerNumber){
+				photonView.TransferOwnership(PhotonNetwork.player.ID);
+			}
+		}
+	}
+	
 	void OnTriggerStay2D(Collider2D other){
 		if (other.gameObject.tag == "Player" || other.gameObject.tag == "PlayerEnemy") {
+			
 			if (other.gameObject.GetComponent<MoveHero> ().ShootFromGun () && shootTimeStamp + 5 < Time.timeSinceLevelLoad) {
 				
 				shootTimeStamp = Time.timeSinceLevelLoad;
@@ -102,6 +114,8 @@ public class ShootCore : MonoBehaviour {
 					gameObject.GetComponent<AudioSource> ().Play ();
 				} else if(gameObject.name.Contains ("Rod")){
 
+					PhotonNetwork.RaiseEvent(38, new object[] { coreInst.name }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+					
 					coreInst.GetComponent<CoreAttack> ().gun = gameObject;
 					GetComponent<Rigidbody2D> ().constraints = RigidbodyConstraints2D.FreezeAll;
 
@@ -125,7 +139,7 @@ public class ShootCore : MonoBehaviour {
 	}
 
 	public void OnEvent(byte eventCode, object content, int senderId){
-		if (eventCode == 33) {
+		if (eventCode == 35) {
 			try {
 				object[] data = (object[])content;
 				string coreName = (string)data[0];
@@ -135,17 +149,52 @@ public class ShootCore : MonoBehaviour {
 				core.GetComponent<CoreAttack> ().gameSettings = GameObject.FindWithTag("GameSettings").GetComponent<SetBackground>();
 				core.transform.position = new Vector2(posX, pointOfCore.transform.position.y);
 				core.GetComponent<CoreAttack> ().insideGun = false;	
+			
+				gameSettings = GameObject.FindWithTag("GameSettings").GetComponent<SetBackground>();
+				int randomIndex = (int)data[2];
+				core.GetComponent<CoreAttack>().currentCommand = gameSettings.shuffledCommands[randomIndex];
+				if(core.GetComponent<CoreAttack>().currentCommand.Contains("pirates")){
+					core.GetComponent<SpriteRenderer>().sprite = core.GetComponent<CoreAttack>().coresSprites[0];
+				} else if(core.GetComponent<CoreAttack>().currentCommand.Contains("clowns")){
+					core.GetComponent<SpriteRenderer>().sprite = core.GetComponent<CoreAttack>().coresSprites[1];
+				} else if(core.GetComponent<CoreAttack>().currentCommand.Contains("knights")){
+					core.GetComponent<SpriteRenderer>().sprite = core.GetComponent<CoreAttack>().coresSprites[2];
+				} else if(core.GetComponent<CoreAttack>().currentCommand.Contains("rods")){
+					core.GetComponent<SpriteRenderer>().sprite = core.GetComponent<CoreAttack>().coresSprites[3];
+				}
+
 			} catch (System.InvalidCastException e) {
 				Debug.Log("InvalidCastException поймал 2");
 			}
+		} else if (eventCode == 38) {
+			object[] data = (object[])content;
+			string coreName = (string)data[0];
+			GameObject core = GameObject.Find(coreName);
+			core.GetComponent<TrailRenderer> ().enabled = true;
 		}
 	}
 
 	public void AddCore(){
-		float randomPositionX = Random.Range(-24, 24f);
+		float randomPositionX = Random.Range(-15, 15f);
 		GameObject coreNew = PhotonNetwork.Instantiate (core.gameObject.name, new Vector2(randomPositionX, pointOfCore.transform.position.y), Quaternion.identity, 0);
+		
+		gameSettings = GameObject.FindWithTag("GameSettings").GetComponent<SetBackground>();
+		int randomCommand = Random.Range(0, 2);
+		// coreNew.GetComponent<CoreAttack>().currentCommand = gameSettings.shuffledCommands[randomCommand];
+		// if(coreNew.GetComponent<CoreAttack>().currentCommand.Contains("pirates")){
+		// 	coreNew.GetComponent<SpriteRenderer>().sprite = coreNew.GetComponent<CoreAttack>().coresSprites[0];
+		// } else if(coreNew.GetComponent<CoreAttack>().currentCommand.Contains("clowns")){
+		// 	coreNew.GetComponent<SpriteRenderer>().sprite = coreNew.GetComponent<CoreAttack>().coresSprites[1];
+		// } else if(coreNew.GetComponent<CoreAttack>().currentCommand.Contains("knights")){
+		// 	coreNew.GetComponent<SpriteRenderer>().sprite = coreNew.GetComponent<CoreAttack>().coresSprites[2];
+		// } else if(coreNew.GetComponent<CoreAttack>().currentCommand.Contains("rods")){
+		// 	coreNew.GetComponent<SpriteRenderer>().sprite = coreNew.GetComponent<CoreAttack>().coresSprites[3];
+		// }
+		
 		// PhotonNetwork.RaiseEvent(33, new object[] { coreNew, randomPositionX }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
-		PhotonNetwork.RaiseEvent(33, new object[] { coreNew.name, randomPositionX }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+		// PhotonNetwork.RaiseEvent(35, new object[] { coreNew.name, randomPositionX }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });
+		
+		//PhotonNetwork.RaiseEvent(35, new object[] { coreNew.name, randomPositionX, randomCommand }, true, new RaiseEventOptions { Receivers = ReceiverGroup.All });		
 		
 		/*
 		закомментировал потому что нельзя называться coreInst то что не для стрельбы а только для подбора
